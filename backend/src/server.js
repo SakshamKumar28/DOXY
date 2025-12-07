@@ -18,6 +18,9 @@ connectDB();
 const app = express();
 const server = http.createServer(app);
 
+// Trust Proxy for Render/Heroku (Required for secure cookies)
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(helmet());
 app.use(cors({
