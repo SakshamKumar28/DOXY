@@ -20,6 +20,11 @@
 </head>
 
 <body>
+  <script>
+    window.global = window;
+    window.process = { env: { DEBUG: undefined }, nextTick: function (fn) { setTimeout(fn, 0); } };
+    window.Buffer = window.Buffer || [];
+  </script>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
 </body>
