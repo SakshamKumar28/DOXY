@@ -15,7 +15,7 @@ export const SocketProvider = ({ children }) => {
     // But for "onlineness", usually need auth.
     // Let's just create the socket instance.
     
-    const newSocket = io({
+    const newSocket = io(import.meta.env.VITE_API_URL, {
         path: '/socket.io',
         // If we need to pass token:
         // auth: { token: ... }
