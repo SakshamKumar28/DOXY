@@ -54,6 +54,9 @@ export const AuthProvider = ({ children }) => {
         
         setUser(validatedUser); 
         localStorage.setItem('doxy_user', JSON.stringify(validatedUser));
+        if (data.token) {
+            localStorage.setItem('token', data.token);
+        }
         toast.success(`Welcome back, ${validatedUser.name || 'User'}!`);
         return validatedUser;
     } catch (error) {
@@ -73,6 +76,9 @@ export const AuthProvider = ({ children }) => {
           
           setUser(validatedUser);
           localStorage.setItem('doxy_user', JSON.stringify(validatedUser));
+          if (data.token) {
+              localStorage.setItem('token', data.token);
+          }
           toast.success('Registration successful!');
           return true;
       } catch (error) {
@@ -86,6 +92,7 @@ export const AuthProvider = ({ children }) => {
       await api.post('/auth/logout');
       setUser(null);
       localStorage.removeItem('doxy_user');
+      localStorage.removeItem('token');
       toast.success('Logged out successfully');
     } catch (error) {
       console.error("Logout error", error);

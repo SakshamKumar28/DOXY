@@ -49,7 +49,20 @@ const protect = asyncHandler(async (req, res, next) => {
 // Let's rewrite the logic slightly to be cleaner.
 
 const protectUniversal = asyncHandler(async (req, res, next) => {
-    let token = req.cookies.jwt;
+    let token;
+
+    // Check header first (most reliable for cross-domain)
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        try {
+            token = req.headers.authorization.split(' ')[1];
+        } catch (error) {
+            console.error('Token extraction failed');
+        }
+    }
+    // Fallback to cookie
+    else if (req.cookies.jwt) {
+        token = req.cookies.jwt;
+    }
 
     if (!token) {
         res.status(401);

@@ -26,12 +26,13 @@ const registerPatient = asyncHandler(async (req, res) => {
     });
 
     if (user) {
-        generateToken(res, user._id);
+        const token = generateToken(res, user._id);
         res.status(201).json({
             _id: user._id,
             name: user.name,
             email: user.email,
-            role: 'Patient'
+            role: 'Patient',
+            token
         });
     } else {
         res.status(400);
@@ -62,12 +63,13 @@ const registerDoctor = asyncHandler(async (req, res) => {
     });
 
     if (doctor) {
-        generateToken(res, doctor._id);
+        const token = generateToken(res, doctor._id);
         res.status(201).json({
             _id: doctor._id,
             name: doctor.name,
             email: doctor.email,
-            role: 'Doctor'
+            role: 'Doctor',
+            token
         });
     } else {
         res.status(400);
@@ -110,12 +112,13 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
     if (user && (await user.matchPassword(password))) {
-        generateToken(res, user._id);
+        const token = generateToken(res, user._id);
         res.status(200).json({
             _id: user._id,
             name: user.name,
             email: user.email,
-            role: role
+            role: role,
+            token
         });
     } else {
         res.status(401);

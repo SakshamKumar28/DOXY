@@ -8,13 +8,25 @@ const api = axios.create({
     },
 });
 
-// Interceptor for responses (e.g. 401 handling)
+// Interceptor for requests (Inject Token)
+api.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
+// Interceptor for responses
 api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            // Handle unauthorized (optional: clear local state if needed)
-            // window.location.href = '/login'; // Or use context to logout
+            // Optional: Clear token on 401? 
+            // localStorage.removeItem('token');
         }
         return Promise.reject(error);
     }
