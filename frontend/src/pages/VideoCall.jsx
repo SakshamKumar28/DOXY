@@ -31,17 +31,9 @@ const VideoCall = () => {
         navigator.mediaDevices.getUserMedia({ video: true, audio: true })
             .then((currentStream) => {
                 setStream(currentStream);
-                if (myVideo.current) {
-                    myVideo.current.srcObject = currentStream;
-                }
-
-                // 2. Join Room
-                socket.emit('join-room', roomId);
-
                 // 3. Setup Listeners
                 socket.on('user-joined', (userId) => {
                     console.log('User joined:', userId);
-                    // We are the initiator because we were already here
                     callUser(userId, currentStream);
                 });
 
@@ -56,21 +48,30 @@ const VideoCall = () => {
             });
 
         return () => {
-            // Cleanup
             if (connectionRef.current) {
                 connectionRef.current.destroy();
             }
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
             }
-            // Remove listeners to avoid duplicates
             socket.off('user-joined');
             socket.off('signal');
-            // Leave room? Socket usually handles disconnect on Nav, 
-            // but explicit leave might be good.
-            // socket.emit('leave-room', roomId);
         };
     }, [socket, roomId]);
+
+    // Separate effect to assign stream to video element when it becomes available
+    useEffect(() => {
+        if (myVideo.current && stream) {
+            myVideo.current.srcObject = stream;
+        }
+    }, [stream]);
+
+    // Separate effect for remote stream
+    useEffect(() => {
+        if (userVideo.current && remoteStream) {
+            userVideo.current.srcObject = remoteStream;
+        }
+    }, [remoteStream]);
 
 
     const callUser = (userId, currentStream) => {
