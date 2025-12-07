@@ -77,15 +77,21 @@ const VideoCall = () => {
     const callUser = (userId, currentStream) => {
         const peer = new SimplePeer({
             initiator: true,
-            trickle: false,
+            trickle: true, // Enable trickle for better connectivity
             stream: currentStream,
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:global.stun.twilio.com:3478' }
+                ]
+            }
         });
 
         peer.on('signal', (data) => {
             socket.emit('signal', {
                 roomId,
                 signalData: data,
-                target: userId // targeting might be useful if strictly 1:1 and we know ID
+                target: userId
             });
         });
 
@@ -98,46 +104,29 @@ const VideoCall = () => {
 
         peer.on('error', (err) => {
             console.error('Peer error:', err);
-            toast.error("Call error");
+            toast.error("Call connection failed. Retrying...");
         });
 
         connectionRef.current = peer;
     };
 
     const answerCall = (signalData, senderId, currentStream) => {
-        // If we already have a connection, we might be receiving the Answer from the Initiator
-        // BUT, simple-peer logic: 
-        // If I am initiator, I wait for signal.
-        // If I am not initiator, I receive offer (signal), create peer, signal back.
-        
-        // Problem: This listener 'signal' fires for BOTH offer and answer.
-        // We need to differentiate or check state.
-        
-        // Scenario A (Initiator): 
-        // 1. Created Peer.
-        // 2. Sent Offer.
-        // 3. Receive Answer (Signal). -> peer.signal(data).
-        
-        // Scenario B (Receiver):
-        // 1. Receive Offer (Signal). 
-        // 2. Create Peer (initiator: false).
-        // 3. peer.signal(data).
-        // 4. Send Answer.
-        
-        // How to distinguish?
-        // If connectionRef.current exists, we are likely the initiator (or already established).
-        // So we just signal it.
-        
         if (connectionRef.current) {
-            // We are the initiator receiving the answer
+            // Already connected or negotiating, just pass the signal
             connectionRef.current.signal(signalData);
-            setCallAccepted(true);
+            if (!callAccepted) setCallAccepted(true); // Ensure accepted state
         } else {
-            // We are the receiver receiving the offer
+            // New Incoming Call
             const peer = new SimplePeer({
                 initiator: false,
-                trickle: false,
+                trickle: true,
                 stream: currentStream,
+                config: {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:global.stun.twilio.com:3478' }
+                    ]
+                }
             });
 
             peer.on('signal', (data) => {
