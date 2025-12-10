@@ -201,11 +201,11 @@ const VideoCall = () => {
 
                 {/* Local Video (Floating) */}
                 {stream && (
-                    <div className="absolute top-4 right-4 w-32 md:w-56 aspect-[9/16] md:aspect-video bg-gray-800 rounded-xl overflow-hidden border-2 border-slate-700 shadow-2xl transition-all hover:scale-105 z-10">
+                    <div className="absolute top-2 right-2 md:top-4 md:right-4 w-24 md:w-56 aspect-[9/16] md:aspect-video bg-gray-800 rounded-xl overflow-hidden border-2 border-slate-700 shadow-2xl transition-all hover:scale-105 z-10">
                         <video playsInline ref={myVideo} autoPlay muted className={`w-full h-full object-cover ${isMyVideoOff ? 'hidden' : ''}`} />
                          {isMyVideoOff && (
                             <div className="w-full h-full flex items-center justify-center bg-gray-900 text-gray-400 text-xs">
-                                <VideoOff size={20} />
+                                <VideoOff size={16} />
                             </div>
                         )}
                     </div>

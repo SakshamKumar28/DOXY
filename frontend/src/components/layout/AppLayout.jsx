@@ -11,6 +11,11 @@ const AppLayout = () => {
     // Actually, Navbar is fine for public, but Dashboards need sidebar.
     // Let's check logic: ProtectedRoutes wrap the Dashboard.
     
+    // Check if we are in a video call
+    if (location.pathname.startsWith('/call/')) {
+        return <Outlet />;
+    }
+
     if (user) {
         return (
             <div className="flex min-h-screen w-full bg-background flex-col md:flex-row">
