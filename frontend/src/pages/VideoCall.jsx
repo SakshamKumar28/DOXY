@@ -81,16 +81,18 @@ const VideoCall = () => {
     const callUser = (userId, currentStream) => {
         const peer = new SimplePeer({
             initiator: true,
-            trickle: true, // Enable trickle for better connectivity
+            trickle: true,
             stream: currentStream,
             config: {
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:global.stun.twilio.com:3478' }
+                    { urls: 'stun:global.stun.twilio.com:3478' },
+                    { urls: 'stun:stun.services.mozilla.com' },
+                    { urls: 'stun:stun.nextcloud.com:443' }
                 ]
             }
         });
-
+        // ... (rest of listeners same as before) ...
         peer.on('signal', (data) => {
             socket.emit('signal', {
                 roomId,
@@ -108,7 +110,7 @@ const VideoCall = () => {
 
         peer.on('error', (err) => {
             console.error('Peer error:', err);
-            toast.error("Call connection failed. Retrying...");
+            // toast.error("Connection unstable. Retrying..."); 
         });
 
         connectionRef.current = peer;
@@ -116,11 +118,9 @@ const VideoCall = () => {
 
     const answerCall = (signalData, senderId, currentStream) => {
         if (connectionRef.current) {
-            // Already connected or negotiating, just pass the signal
             connectionRef.current.signal(signalData);
-            if (!callAccepted) setCallAccepted(true); // Ensure accepted state
+            if (!callAccepted) setCallAccepted(true);
         } else {
-            // New Incoming Call
             const peer = new SimplePeer({
                 initiator: false,
                 trickle: true,
@@ -128,11 +128,13 @@ const VideoCall = () => {
                 config: {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'stun:global.stun.twilio.com:3478' }
+                        { urls: 'stun:global.stun.twilio.com:3478' },
+                        { urls: 'stun:stun.services.mozilla.com' },
+                        { urls: 'stun:stun.nextcloud.com:443' }
                     ]
                 }
             });
-
+            // ... (rest of listeners same as before) ...
             peer.on('signal', (data) => {
                 socket.emit('signal', {
                     roomId,
@@ -176,58 +178,62 @@ const VideoCall = () => {
         if (connectionRef.current) {
             connectionRef.current.destroy();
         }
-        navigate(-1); // Go back
+        navigate(-1);
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] bg-slate-900 p-4">
+        <div className="flex flex-col items-center justify-center w-full min-h-screen bg-slate-900 md:p-4 p-0">
             
-            <div className="relative w-full max-w-5xl aspect-video bg-black rounded-lg overflow-hidden shadow-2xl flex items-center justify-center">
+            <div className="relative w-full h-screen md:h-auto md:max-w-6xl md:aspect-video bg-black md:rounded-2xl overflow-hidden shadow-2xl flex items-center justify-center">
                 {/* Remote Video (Main) */}
                 {callAccepted && remoteStream ? (
                      <video playsInline ref={userVideo} autoPlay className="w-full h-full object-cover" />
                 ) : (
-                    <div className="text-white text-center">
-                        <p className="text-lg animate-pulse">Waiting for other to join...</p>
-                        <p className="text-sm text-gray-400 mt-2">Room ID: {roomId}</p>
+                    <div className="text-white text-center p-4">
+                        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="text-lg font-medium animate-pulse">Waiting for other to join...</p>
+                        <p className="text-sm text-gray-400 mt-2">Room: {roomId}</p>
+                        <p className="text-xs text-gray-500 mt-4 max-w-xs mx-auto">
+                            If connection takes long, try refreshing both devices.
+                        </p>
                     </div>
                 )}
 
                 {/* Local Video (Floating) */}
                 {stream && (
-                    <div className="absolute top-4 right-4 w-48 aspect-video bg-gray-800 rounded-lg overflow-hidden border-2 border-slate-700 shadow-lg">
+                    <div className="absolute top-4 right-4 w-32 md:w-56 aspect-[9/16] md:aspect-video bg-gray-800 rounded-xl overflow-hidden border-2 border-slate-700 shadow-2xl transition-all hover:scale-105 z-10">
                         <video playsInline ref={myVideo} autoPlay muted className={`w-full h-full object-cover ${isMyVideoOff ? 'hidden' : ''}`} />
                          {isMyVideoOff && (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                                Camera Off
+                            <div className="w-full h-full flex items-center justify-center bg-gray-900 text-gray-400 text-xs">
+                                <VideoOff size={20} />
                             </div>
                         )}
                     </div>
                 )}
-            </div>
-
-            {/* Controls */}
-            <div className="mt-8 flex gap-6">
-                <button
-                    onClick={toggleMute}
-                    className={`p-4 rounded-full transition-all ${isMyAudioMuted ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-700 hover:bg-gray-600'}`}
-                >
-                    {isMyAudioMuted ? <MicOff className="text-white" /> : <Mic className="text-white" />}
-                </button>
                 
-                <button
-                    onClick={leaveCall}
-                    className="p-4 rounded-full bg-red-600 hover:bg-red-700 transition-all shadow-lg hover:shadow-red-500/50"
-                >
-                    <PhoneOff className="text-white" />
-                </button>
+                {/* Controls Overlay (Mobile-Friendly) */}
+                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex items-center gap-4 md:gap-8 z-20 px-6 py-4 bg-gray-900/80 backdrop-blur-md rounded-full border border-white/10 shadow-xl">
+                    <button
+                        onClick={toggleMute}
+                        className={`p-4 rounded-full transition-all ${isMyAudioMuted ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-700/50 hover:bg-gray-600/50 text-white'}`}
+                    >
+                        {isMyAudioMuted ? <MicOff size={24} /> : <Mic size={24} />}
+                    </button>
+                    
+                    <button
+                        onClick={leaveCall}
+                        className="p-5 rounded-full bg-red-600/90 hover:bg-red-700 transition-all shadow-lg hover:shadow-red-500/50 scale-110"
+                    >
+                        <PhoneOff size={28} className="text-white" />
+                    </button>
 
-                <button
-                    onClick={toggleVideo}
-                    className={`p-4 rounded-full transition-all ${isMyVideoOff ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-700 hover:bg-gray-600'}`}
-                >
-                    {isMyVideoOff ? <VideoOff className="text-white" /> : <Video className="text-white" />}
-                </button>
+                    <button
+                        onClick={toggleVideo}
+                        className={`p-4 rounded-full transition-all ${isMyVideoOff ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-700/50 hover:bg-gray-600/50 text-white'}`}
+                    >
+                        {isMyVideoOff ? <VideoOff size={24} /> : <Video size={24} />}
+                    </button>
+                </div>
             </div>
         </div>
     );
