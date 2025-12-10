@@ -31,6 +31,10 @@ const VideoCall = () => {
         navigator.mediaDevices.getUserMedia({ video: true, audio: true })
             .then((currentStream) => {
                 setStream(currentStream);
+                
+                // 2. Join Room (CRITICAL DO NOT REMOVE)
+                socket.emit('join-room', roomId);
+
                 // 3. Setup Listeners
                 socket.on('user-joined', (userId) => {
                     console.log('User joined:', userId);
